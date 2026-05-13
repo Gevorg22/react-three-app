@@ -151,8 +151,8 @@ export default function Floor({ params }: FloorProps) {
 
   const isHerringbone = layoutType === 'herringbone';
 
-  // In straight mode all planks share the same orientation, so we use the
-  // lighter golden-oak material for visual consistency.
+  // В прямой раскладке все плашки одинаково ориентированы, поэтому используем
+  // светлый материал для визуальной однородности.
   const vMatEffective = useMemo(
     () => (isHerringbone ? vMat : hMat),
     [isHerringbone, vMat, hMat]

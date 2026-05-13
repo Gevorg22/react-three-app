@@ -1,26 +1,26 @@
 import type { PlankInstance } from '../types';
 
 /**
- * Generates herringbone (ёлочка) plank positions at 45° to the room walls.
+ * Генерирует позиции плашек для раскладки ёлочкой под углом 45° к стенам.
  *
- * Coordinate system:
- *   The pattern is built in a rotated (u, v) space where:
- *     u-axis points NE (45°) in world space
- *     v-axis points NW (135°) in world space
- *   World positions are recovered via:
+ * Система координат:
+ *   Паттерн строится во вращённом пространстве (u, v), где:
+ *     ось u направлена на СВ (45°) в мировом пространстве
+ *     ось v направлена на СЗ (135°) в мировом пространстве
+ *   Мировые координаты восстанавливаются по формулам:
  *     wx = (u - v) / √2
  *     wz = (u + v) / √2
  *
- * Column-pair layout (repeating unit, width = L + W in u-direction):
- *   [H column: u ∈ [0, L]]  [V column: u ∈ [L, L+W]]
- *   H planks: long axis along u, stacked every W in v-direction
- *   V planks: long axis along v, stacked every L in v-direction
+ * Структура повторяющейся пары колонок (ширина = L + W по оси u):
+ *   [Г-колонка: u ∈ [0, L]]  [В-колонка: u ∈ [L, L+W]]
+ *   Г-плашки: длинная ось вдоль u, шаг W по оси v
+ *   В-плашки: длинная ось вдоль v, шаг L по оси v
  *
- * Adjacent column pairs are staggered by W in v-direction so that planks
- * interlock: after L/W column pairs the stagger cycles back to zero.
+ * Соседние пары колонок смещены на W по оси v так, чтобы плашки
+ * переплетались: через L/W пар смещение возвращается в ноль.
  *
- * Returned planks extend slightly beyond the room boundary so the
- * clipping planes applied to the material can cleanly trim the edges.
+ * Возвращаемые плашки выходят немного за границу комнаты — точная
+ * обрезка выполняется плоскостями отсечения, заданными в материале.
  */
 export function generateHerringbone(
   roomW: number,
@@ -32,13 +32,13 @@ export function generateHerringbone(
   const L = plankLength + gap;
   const W = plankWidth + gap;
 
-  // Width of one repeating column pair in the u-direction
+  // Ширина одной пары колонок по оси u
   const periodU = L + W;
 
-  // How many V plank lengths fit in one stagger cycle (usually an integer, e.g. 6 for 600×100 mm)
+  // Количество В-плашек в цикле смещения (обычно целое, например 6 для 600×100 мм)
   const staggerPeriod = Math.round(L / W);
 
-  // Extent of the virtual grid in u-v space: must reach all four room corners
+  // Размах виртуальной сетки в пространстве (u, v): должен покрывать все углы комнаты
   const diagonal = Math.sqrt(roomW * roomW + roomL * roomL) / 2;
   const extent = diagonal + Math.max(L, W) * 4;
 
@@ -47,15 +47,15 @@ export function generateHerringbone(
   const planks: PlankInstance[] = [];
 
   for (let ci = -numPairs; ci <= numPairs; ci++) {
-    // Left edge of the H column for this pair
+    // Левый край Г-колонки для данной пары
     const uH = ci * periodU;
-    // Left edge of the V column for this pair
+    // Левый край В-колонки для данной пары
     const uV = uH + L;
 
-    // Stagger V planks by W for every column pair; reset every staggerPeriod pairs
+    // Смещение В-плашек на W за каждую пару; сбрасывается каждые staggerPeriod пар
     const vOffset = ((ci % staggerPeriod) * W + L * 100) % L;
 
-    // --- H planks: center at (uH + L/2, j*W + W/2) ---
+    // --- Г-плашки: центр в (uH + L/2, j*W + W/2) ---
     const vStartH = Math.floor((-extent - 1) / W) * W;
     for (let v = vStartH; v < extent + W; v += W) {
       const cu = uH + L / 2;
@@ -67,7 +67,7 @@ export function generateHerringbone(
       });
     }
 
-    // --- V planks: center at (uV + W/2, k*L + vOffset + L/2) ---
+    // --- В-плашки: центр в (uV + W/2, k*L + vOffset + L/2) ---
     const vStartV = Math.floor((-extent - vOffset - 1) / L) * L + vOffset;
     for (let v = vStartV; v < extent + L; v += L) {
       const cu = uV + W / 2;
@@ -80,8 +80,8 @@ export function generateHerringbone(
     }
   }
 
-  // Discard planks whose centers are far outside the room.
-  // Clipping planes on the material handle the precise boundary trimming.
+  // Отбрасываем плашки, центр которых далеко за пределами комнаты.
+  // Точная обрезка по границе выполняется плоскостями отсечения в материале.
   const margin = Math.max(L, W) * 2;
   return planks.filter(
     p => Math.abs(p.cx) < roomW / 2 + margin && Math.abs(p.cz) < roomL / 2 + margin
@@ -89,9 +89,9 @@ export function generateHerringbone(
 }
 
 /**
- * Generates a straight (running-bond) plank layout parallel to the room walls.
- * Odd-numbered rows are offset by half a plank length to break up vertical joints.
- * All planks run along the room's length axis (Z).
+ * Генерирует раскладку плашек палубой (прямая раскладка) параллельно стенам комнаты.
+ * Нечётные ряды смещены на половину длины плашки — разбивает сквозные швы.
+ * Все плашки ориентированы вдоль оси длины комнаты (Z).
  */
 export function generateStraight(
   roomW: number,
@@ -107,12 +107,12 @@ export function generateStraight(
   const halfW = roomW / 2;
   const halfL = roomL / 2;
 
-  // +2 rows/cols so planks reach the edges after clipping
+  // +2 ряда/столбца, чтобы плашки доходили до краёв после отсечения
   const numRows = Math.ceil(roomW / W) + 2;
   const numCols = Math.ceil(roomL / L) + 2;
 
   for (let row = -1; row <= numRows; row++) {
-    // Running-bond offset: shift every other row by half a plank length
+    // Смещение через ряд на половину длины плашки — разбивает сквозные швы
     const rowOffset = row % 2 === 0 ? 0 : L / 2;
     for (let col = -1; col <= numCols; col++) {
       const cx = row * W - halfW + W / 2;
