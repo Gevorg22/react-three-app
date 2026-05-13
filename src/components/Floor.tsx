@@ -102,17 +102,15 @@ export default function Floor({ params }: FloorProps) {
   const hPlanks = useMemo(() => planks.filter(p => p.isHorizontal), [planks]);
   const vPlanks = useMemo(() => planks.filter(p => !p.isHorizontal), [planks]);
 
-  const aspectH = plankLength / plankWidth;
-  const woodTexH = useMemo(
-    () => makeWoodTexture(32, 55, 52, true, aspectH, 1),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [plankLength, plankWidth]
-  );
-  const woodTexV = useMemo(
-    () => makeWoodTexture(24, 48, 34, false, 1, aspectH),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [plankLength, plankWidth]
-  );
+  const woodTexH = useMemo(() => {
+    const aspect = plankLength / plankWidth;
+    return makeWoodTexture(32, 55, 52, true, aspect, 1);
+  }, [plankLength, plankWidth]);
+
+  const woodTexV = useMemo(() => {
+    const aspect = plankLength / plankWidth;
+    return makeWoodTexture(24, 48, 34, false, 1, aspect);
+  }, [plankLength, plankWidth]);
 
   const clippingPlanes = useMemo(() => makeClippingPlanes(width, length), [width, length]);
 
@@ -153,6 +151,13 @@ export default function Floor({ params }: FloorProps) {
 
   const isHerringbone = layoutType === 'herringbone';
 
+  // In straight mode all planks share the same orientation, so we use the
+  // lighter golden-oak material for visual consistency.
+  const vMatEffective = useMemo(
+    () => (isHerringbone ? vMat : hMat),
+    [isHerringbone, vMat, hMat]
+  );
+
   useEffect(() => {
     const mesh = hMeshRef.current;
     if (!mesh) return;
@@ -192,7 +197,7 @@ export default function Floor({ params }: FloorProps) {
       {vPlanks.length > 0 && (
         <instancedMesh
           ref={vMeshRef}
-          args={[vGeo, vMat, vPlanks.length]}
+          args={[vGeo, vMatEffective, vPlanks.length]}
           castShadow
           receiveShadow
         />
