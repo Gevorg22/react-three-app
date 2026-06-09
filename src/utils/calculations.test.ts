@@ -1,0 +1,105 @@
+import { describe, it, expect } from 'vitest';
+import { calculate } from './calculations';
+import type { RoomParams } from '../types';
+
+const base: RoomParams = {
+  width: 4,
+  length: 5,
+  height: 2.7,
+  plankLength: 0.6,
+  plankWidth: 0.1,
+  gap: 0.005,
+  layoutType: 'straight',
+  wastePercent: 10,
+  wallColor: '#ffffff',
+};
+
+describe('calculate', () => {
+  it('floorArea = width × length', () => {
+    const result = calculate(base);
+    expect(result.floorArea).toBe(20);
+  });
+
+  it('wallArea = 2 × (width + length) × height', () => {
+    const result = calculate(base);
+    expect(result.wallArea).toBe(parseFloat((2 * (4 + 5) * 2.7).toFixed(2)));
+  });
+
+  it('perimeter = 2 × (width + length)', () => {
+    const result = calculate(base);
+    expect(result.perimeter).toBe(18);
+  });
+
+  it('baseboardMeters equals perimeter', () => {
+    const result = calculate(base);
+    expect(result.baseboardMeters).toBe(result.perimeter);
+  });
+
+  it('totalPlanks = ceil(floorArea / plankArea)', () => {
+    const result = calculate(base);
+    const plankArea = base.plankLength * base.plankWidth;
+    const expected = Math.ceil(20 / plankArea);
+    expect(result.totalPlanks).toBe(expected);
+  });
+
+  it('planksWithWaste for straight layout uses only wastePercent', () => {
+    const result = calculate(base);
+    const plankArea = base.plankLength * base.plankWidth;
+    const basePlanks = Math.ceil(20 / plankArea);
+    const expected = Math.ceil(basePlanks * (1 + 0.1));
+    expect(result.planksWithWaste).toBe(expected);
+  });
+
+  it('planksWithWaste for herringbone adds 5% extra to wastePercent', () => {
+    const result = calculate({ ...base, layoutType: 'herringbone', wastePercent: 10 });
+    const plankArea = base.plankLength * base.plankWidth;
+    const basePlanks = Math.ceil(20 / plankArea);
+    const expected = Math.ceil(basePlanks * (1 + 0.15));
+    expect(result.planksWithWaste).toBe(expected);
+  });
+
+  it('herringbone planksWithWaste is always greater than straight with same wastePercent', () => {
+    const straight = calculate({ ...base, layoutType: 'straight' });
+    const herringbone = calculate({ ...base, layoutType: 'herringbone' });
+    expect(herringbone.planksWithWaste).toBeGreaterThan(straight.planksWithWaste);
+  });
+
+  it('paintLiters = wallArea / 8 × 2, rounded to 2 decimal places', () => {
+    const result = calculate(base);
+    const expected = parseFloat(((result.wallArea / 8) * 2).toFixed(2));
+    expect(result.paintLiters).toBe(expected);
+  });
+
+  it('larger room produces larger floorArea, wallArea, perimeter', () => {
+    const small = calculate(base);
+    const large = calculate({ ...base, width: 8, length: 10 });
+    expect(large.floorArea).toBeGreaterThan(small.floorArea);
+    expect(large.wallArea).toBeGreaterThan(small.wallArea);
+    expect(large.perimeter).toBeGreaterThan(small.perimeter);
+  });
+
+  it('larger plank reduces totalPlanks', () => {
+    const small = calculate(base);
+    const large = calculate({ ...base, plankLength: 1.2, plankWidth: 0.2 });
+    expect(large.totalPlanks).toBeLessThan(small.totalPlanks);
+  });
+
+  it('higher wastePercent increases planksWithWaste', () => {
+    const low = calculate({ ...base, wastePercent: 5 });
+    const high = calculate({ ...base, wastePercent: 25 });
+    expect(high.planksWithWaste).toBeGreaterThan(low.planksWithWaste);
+  });
+
+  it('zero waste on straight layout keeps only base ceiling', () => {
+    const result = calculate({ ...base, wastePercent: 0, layoutType: 'straight' });
+    expect(result.planksWithWaste).toBe(result.totalPlanks);
+  });
+
+  it('returns numeric values with at most 2 decimal places for area fields', () => {
+    const result = calculate({ ...base, width: 3.333, length: 4.567 });
+    const decimals = (n: number) => (n.toString().split('.')[1] ?? '').length;
+    expect(decimals(result.floorArea)).toBeLessThanOrEqual(2);
+    expect(decimals(result.wallArea)).toBeLessThanOrEqual(2);
+    expect(decimals(result.perimeter)).toBeLessThanOrEqual(2);
+  });
+});
