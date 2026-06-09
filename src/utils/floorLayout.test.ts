@@ -8,17 +8,17 @@ const plankWidth = 0.1;
 const gap = 0.005;
 
 describe('generateStraight', () => {
-  it('returns a non-empty array', () => {
+  it('возвращает непустой массив', () => {
     const planks = generateStraight(roomW, roomL, plankLength, plankWidth, gap);
     expect(planks.length).toBeGreaterThan(0);
   });
 
-  it('all planks have isHorizontal = false', () => {
+  it('все плашки имеют isHorizontal = false', () => {
     const planks = generateStraight(roomW, roomL, plankLength, plankWidth, gap);
     expect(planks.every(p => p.isHorizontal === false)).toBe(true);
   });
 
-  it('every plank has numeric cx and cz', () => {
+  it('каждая плашка имеет числовые координаты cx и cz', () => {
     const planks = generateStraight(roomW, roomL, plankLength, plankWidth, gap);
     for (const p of planks) {
       expect(typeof p.cx).toBe('number');
@@ -28,13 +28,13 @@ describe('generateStraight', () => {
     }
   });
 
-  it('larger room produces more planks', () => {
+  it('для большей комнаты генерируется больше плашек', () => {
     const small = generateStraight(2, 3, plankLength, plankWidth, gap);
     const large = generateStraight(8, 10, plankLength, plankWidth, gap);
     expect(large.length).toBeGreaterThan(small.length);
   });
 
-  it('plank centers cover the room width range', () => {
+  it('центры плашек покрывают всю ширину комнаты', () => {
     const planks = generateStraight(roomW, roomL, plankLength, plankWidth, gap);
     const minCx = Math.min(...planks.map(p => p.cx));
     const maxCx = Math.max(...planks.map(p => p.cx));
@@ -42,7 +42,7 @@ describe('generateStraight', () => {
     expect(maxCx).toBeGreaterThanOrEqual(roomW / 2);
   });
 
-  it('plank centers cover the room length range', () => {
+  it('центры плашек покрывают всю длину комнаты', () => {
     const planks = generateStraight(roomW, roomL, plankLength, plankWidth, gap);
     const minCz = Math.min(...planks.map(p => p.cz));
     const maxCz = Math.max(...planks.map(p => p.cz));
@@ -50,7 +50,7 @@ describe('generateStraight', () => {
     expect(maxCz).toBeGreaterThanOrEqual(roomL / 2);
   });
 
-  it('odd rows are offset by half plankLength to break straight joints', () => {
+  it('нечётные ряды смещены на половину длины плашки для разбивки сквозных швов', () => {
     const L = plankLength + gap;
     const W = plankWidth + gap;
     const planks = generateStraight(roomW, roomL, plankLength, plankWidth, gap);
@@ -67,25 +67,25 @@ describe('generateStraight', () => {
     }
   });
 
-  it('gap = 0 still produces a valid layout', () => {
+  it('при gap = 0 раскладка генерируется корректно', () => {
     const planks = generateStraight(roomW, roomL, plankLength, plankWidth, 0);
     expect(planks.length).toBeGreaterThan(0);
   });
 });
 
 describe('generateHerringbone', () => {
-  it('returns a non-empty array', () => {
+  it('возвращает непустой массив', () => {
     const planks = generateHerringbone(roomW, roomL, plankLength, plankWidth, gap);
     expect(planks.length).toBeGreaterThan(0);
   });
 
-  it('contains both horizontal and non-horizontal planks', () => {
+  it('содержит плашки обоих направлений', () => {
     const planks = generateHerringbone(roomW, roomL, plankLength, plankWidth, gap);
     expect(planks.some(p => p.isHorizontal === true)).toBe(true);
     expect(planks.some(p => p.isHorizontal === false)).toBe(true);
   });
 
-  it('every plank has finite numeric cx and cz', () => {
+  it('каждая плашка имеет конечные числовые координаты cx и cz', () => {
     const planks = generateHerringbone(roomW, roomL, plankLength, plankWidth, gap);
     for (const p of planks) {
       expect(isFinite(p.cx)).toBe(true);
@@ -93,7 +93,7 @@ describe('generateHerringbone', () => {
     }
   });
 
-  it('no plank center is more than 2×(L+W) outside the room boundary', () => {
+  it('ни один центр плашки не выходит за пределы комнаты более чем на 2×(L+W)', () => {
     const margin = (plankLength + plankWidth) * 2;
     const planks = generateHerringbone(roomW, roomL, plankLength, plankWidth, gap);
     for (const p of planks) {
@@ -102,18 +102,18 @@ describe('generateHerringbone', () => {
     }
   });
 
-  it('larger room produces more planks', () => {
+  it('для большей комнаты генерируется больше плашек', () => {
     const small = generateHerringbone(2, 3, plankLength, plankWidth, gap);
     const large = generateHerringbone(8, 10, plankLength, plankWidth, gap);
     expect(large.length).toBeGreaterThan(small.length);
   });
 
-  it('gap = 0 still produces a valid layout', () => {
+  it('при gap = 0 раскладка генерируется корректно', () => {
     const planks = generateHerringbone(roomW, roomL, plankLength, plankWidth, 0);
     expect(planks.length).toBeGreaterThan(0);
   });
 
-  it('ratio of horizontal to vertical planks approximates plankLength / plankWidth', () => {
+  it('соотношение горизонтальных к вертикальным плашкам соответствует пропорции длины к ширине плашки', () => {
     const planks = generateHerringbone(roomW, roomL, plankLength, plankWidth, gap);
     const h = planks.filter(p => p.isHorizontal).length;
     const v = planks.filter(p => !p.isHorizontal).length;

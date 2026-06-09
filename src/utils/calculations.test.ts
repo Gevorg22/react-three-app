@@ -15,34 +15,34 @@ const base: RoomParams = {
 };
 
 describe('calculate', () => {
-  it('floorArea = width × length', () => {
+  it('площадь пола = ширина × длина', () => {
     const result = calculate(base);
     expect(result.floorArea).toBe(20);
   });
 
-  it('wallArea = 2 × (width + length) × height', () => {
+  it('площадь стен = 2 × (ширина + длина) × высота', () => {
     const result = calculate(base);
     expect(result.wallArea).toBe(parseFloat((2 * (4 + 5) * 2.7).toFixed(2)));
   });
 
-  it('perimeter = 2 × (width + length)', () => {
+  it('периметр = 2 × (ширина + длина)', () => {
     const result = calculate(base);
     expect(result.perimeter).toBe(18);
   });
 
-  it('baseboardMeters equals perimeter', () => {
+  it('длина плинтуса равна периметру', () => {
     const result = calculate(base);
     expect(result.baseboardMeters).toBe(result.perimeter);
   });
 
-  it('totalPlanks = ceil(floorArea / plankArea)', () => {
+  it('количество плашек = ceil(площадь пола / площадь плашки)', () => {
     const result = calculate(base);
     const plankArea = base.plankLength * base.plankWidth;
     const expected = Math.ceil(20 / plankArea);
     expect(result.totalPlanks).toBe(expected);
   });
 
-  it('planksWithWaste for straight layout uses only wastePercent', () => {
+  it('прямая раскладка использует только заданный процент запаса', () => {
     const result = calculate(base);
     const plankArea = base.plankLength * base.plankWidth;
     const basePlanks = Math.ceil(20 / plankArea);
@@ -50,7 +50,7 @@ describe('calculate', () => {
     expect(result.planksWithWaste).toBe(expected);
   });
 
-  it('planksWithWaste for herringbone adds 5% extra to wastePercent', () => {
+  it('ёлочка добавляет 5% сверх заданного запаса', () => {
     const result = calculate({ ...base, layoutType: 'herringbone', wastePercent: 10 });
     const plankArea = base.plankLength * base.plankWidth;
     const basePlanks = Math.ceil(20 / plankArea);
@@ -58,19 +58,19 @@ describe('calculate', () => {
     expect(result.planksWithWaste).toBe(expected);
   });
 
-  it('herringbone planksWithWaste is always greater than straight with same wastePercent', () => {
+  it('ёлочка даёт больше плашек с запасом, чем прямая раскладка при том же проценте', () => {
     const straight = calculate({ ...base, layoutType: 'straight' });
     const herringbone = calculate({ ...base, layoutType: 'herringbone' });
     expect(herringbone.planksWithWaste).toBeGreaterThan(straight.planksWithWaste);
   });
 
-  it('paintLiters = wallArea / 8 × 2, rounded to 2 decimal places', () => {
+  it('расход краски = площадь стен / 8 × 2, округлённый до 2 знаков', () => {
     const result = calculate(base);
     const expected = parseFloat(((result.wallArea / 8) * 2).toFixed(2));
     expect(result.paintLiters).toBe(expected);
   });
 
-  it('larger room produces larger floorArea, wallArea, perimeter', () => {
+  it('большая комната даёт большую площадь пола, стен и периметр', () => {
     const small = calculate(base);
     const large = calculate({ ...base, width: 8, length: 10 });
     expect(large.floorArea).toBeGreaterThan(small.floorArea);
@@ -78,24 +78,24 @@ describe('calculate', () => {
     expect(large.perimeter).toBeGreaterThan(small.perimeter);
   });
 
-  it('larger plank reduces totalPlanks', () => {
+  it('более крупная плашка уменьшает количество плашек', () => {
     const small = calculate(base);
     const large = calculate({ ...base, plankLength: 1.2, plankWidth: 0.2 });
     expect(large.totalPlanks).toBeLessThan(small.totalPlanks);
   });
 
-  it('higher wastePercent increases planksWithWaste', () => {
+  it('больший процент запаса увеличивает количество плашек с запасом', () => {
     const low = calculate({ ...base, wastePercent: 5 });
     const high = calculate({ ...base, wastePercent: 25 });
     expect(high.planksWithWaste).toBeGreaterThan(low.planksWithWaste);
   });
 
-  it('zero waste on straight layout keeps only base ceiling', () => {
+  it('нулевой запас при прямой раскладке не добавляет плашки сверх базового числа', () => {
     const result = calculate({ ...base, wastePercent: 0, layoutType: 'straight' });
     expect(result.planksWithWaste).toBe(result.totalPlanks);
   });
 
-  it('returns numeric values with at most 2 decimal places for area fields', () => {
+  it('площадные поля округляются до не более 2 знаков после запятой', () => {
     const result = calculate({ ...base, width: 3.333, length: 4.567 });
     const decimals = (n: number) => (n.toString().split('.')[1] ?? '').length;
     expect(decimals(result.floorArea)).toBeLessThanOrEqual(2);
